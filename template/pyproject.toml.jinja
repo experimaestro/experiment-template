@@ -1,5 +1,5 @@
 [build-system]
-requires = ["hatchling", "hatch-vcs"]
+requires = ["hatchling"{% if releases %}, "hatch-vcs"{% endif %}]
 build-backend = "hatchling.build"
 
 [project]
@@ -54,14 +54,20 @@ url = "https://download.pytorch.org/whl/{{ torch_index }}"
 explicit = true
 {%- endif %}
 
+{% if releases -%}
 [tool.hatch.version]
 source = "vcs"
+fallback-version = "0.0.0"
 
 [tool.hatch.version.raw-options]
 local_scheme = "no-local-version"
 
 [tool.hatch.build.hooks.vcs]
 version-file = "src/{{ package_name }}/_version.py"
+{%- else -%}
+[tool.hatch.version]
+path = "src/{{ package_name }}/__init__.py"
+{%- endif %}
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/{{ package_name }}"]

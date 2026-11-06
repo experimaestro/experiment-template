@@ -2,18 +2,20 @@
 # Generates a project from the working tree of this template, then checks that
 # it works: linting, tests, a real run of each specification, and copier update.
 #
-#   scripts/check-template.sh FLAVOR [--mlboard YAML_LIST] [--carbon] [--keep]
+#   scripts/check-template.sh FLAVOR [--mlboard YAML_LIST] [--carbon] [--releases] [--keep]
 set -euo pipefail
 
-flavor=${1:?usage: check-template.sh FLAVOR [--mlboard YAML_LIST] [--carbon] [--keep]}
+flavor=${1:?usage: check-template.sh FLAVOR [--mlboard YAML_LIST] [--carbon] [--releases] [--keep]}
 shift
 mlboard="[]"
 carbon=false
+releases=false
 keep=false
 while [ $# -gt 0 ]; do
     case "$1" in
     --mlboard) mlboard=$2; shift 2 ;;
     --carbon) carbon=true; shift ;;
+    --releases) releases=true; shift ;;
     --keep) keep=true; shift ;;
     *) echo "Unknown option: $1" >&2; exit 2 ;;
     esac
@@ -43,7 +45,7 @@ git -C "$template" add -A
 git -C "$template" commit -qm "chore: snapshot" --no-verify
 git -C "$template" tag v0.0.1
 
-step "Generate ($flavor, mlboard=$mlboard, carbon=$carbon)"
+step "Generate ($flavor, mlboard=$mlboard, carbon=$carbon, releases=$releases)"
 project=$work/project
 uvx copier copy --defaults --vcs-ref=HEAD \
     --data project_name=check-project \
@@ -51,6 +53,7 @@ uvx copier copy --defaults --vcs-ref=HEAD \
     --data "flavor=$flavor" \
     --data "mlboard=$mlboard" \
     --data "carbon=$carbon" \
+    --data "releases=$releases" \
     --data experiment_name=first \
     --data 'specifications=[debug, small, full]' \
     "$template" "$project"
@@ -65,6 +68,16 @@ if [ "$flavor" = basic ]; then
 else
     [ -f experiments/first/pre_experiment.py ] || fail "pre_experiment.py is missing"
 fi
+if [ "$releases" = true ]; then
+    [ -f cliff.toml ] || fail "cliff.toml is missing"
+    grep -q hatch-vcs pyproject.toml || fail "hatch-vcs is missing"
+else
+    [ ! -e cliff.toml ] || fail "cliff.toml without releases"
+    ! grep -q hatch-vcs pyproject.toml || fail "hatch-vcs without releases"
+fi
+
+step "Install without a git repository"
+uv sync
 
 git init -q -b main
 git add -A
@@ -118,14 +131,14 @@ git add -A
 git commit -qm "feat: my experiment" --no-verify
 plan=$(cat experiments/first/run.py)
 
-echo "# template update" >>"$template/template/cliff.toml.jinja"
+echo "# template update" >>"$template/template/.gitignore"
 echo "# template update" >>"$template/template/experiments/{{ experiment_name }}/run.py.jinja"
 git -C "$template" add -A
 git -C "$template" commit -qm "chore: update" --no-verify
 git -C "$template" tag v0.0.2
 
 uvx copier update --defaults --vcs-ref=HEAD
-grep -q "# template update" cliff.toml || fail "cliff.toml was not updated"
+grep -q "# template update" .gitignore || fail ".gitignore was not updated"
 [ "$plan" = "$(cat experiments/first/run.py)" ] || fail "experiments/first/run.py was changed"
 if git status --short | grep -q '\.rej$'; then fail "copier update left conflicts"; fi
 

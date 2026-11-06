@@ -52,6 +52,11 @@ license:
   help: SPDX license expression
   default: GPL-3.0-or-later
 
+releases:
+  type: bool
+  help: Will you tag releases? (version from git tags and a git-cliff changelog)
+  default: false
+
 python_min:
   type: str
   help: Minimum supported Python version

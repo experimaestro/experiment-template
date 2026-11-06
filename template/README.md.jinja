@@ -50,11 +50,16 @@ when the hooks reformat files:
 git add <files> && uv run pre-commit; git add -u && git commit -m "..."
 ```
 
-To generate a changelog with [git-cliff](https://git-cliff.org):
+{% if releases -%}
+The version comes from the git tags. To generate a changelog with
+[git-cliff](https://git-cliff.org):
 
 ```bash
 uvx git-cliff -o CHANGELOG.md
 ```
+{%- else -%}
+The version is set in `src/{{ package_name }}/__init__.py`.
+{%- endif %}
 
 This project was generated from
 [experiment-template](https://github.com/experimaestro/experiment-template). To

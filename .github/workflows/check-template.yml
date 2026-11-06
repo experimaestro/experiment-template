@@ -12,7 +12,7 @@ on:
 
 jobs:
   check:
-    name: ${{ matrix.flavor }} (${{ matrix.os }}, mlboard=${{ matrix.mlboard }}${{ matrix.carbon && ', carbon' || '' }})
+    name: ${{ matrix.flavor }} (${{ matrix.os }}, mlboard=${{ matrix.mlboard }}${{ matrix.carbon && ', carbon' || '' }}${{ matrix.releases && ', releases' || '' }})
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -20,7 +20,7 @@ jobs:
         include:
           - {os: ubuntu-latest, flavor: basic, mlboard: "[]", carbon: false}
           - {os: macos-latest, flavor: basic, mlboard: "[]", carbon: false}
-          - {os: ubuntu-latest, flavor: basic, mlboard: "[tensorboard, tables]", carbon: true}
+          - {os: ubuntu-latest, flavor: basic, mlboard: "[tensorboard, tables]", carbon: true, releases: true}
           - {os: ubuntu-latest, flavor: torch, mlboard: "[tensorboard]", carbon: false}
           - {os: ubuntu-latest, flavor: ir, mlboard: "[tensorboard, tables, wandb]", carbon: false}
 
@@ -33,4 +33,4 @@ jobs:
       - name: Generate a project and run its experiments
         timeout-minutes: 30
         run: |
-          scripts/check-template.sh ${{ matrix.flavor }} --mlboard '${{ matrix.mlboard }}' ${{ matrix.carbon && '--carbon' || '' }}
+          scripts/check-template.sh ${{ matrix.flavor }} --mlboard '${{ matrix.mlboard }}' ${{ matrix.carbon && '--carbon' || '' }} ${{ matrix.releases && '--releases' || '' }}

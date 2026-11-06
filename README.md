@@ -3,8 +3,7 @@
 [Copier](https://copier.readthedocs.io) template for
 [experimaestro](https://experimaestro-python.readthedocs.io) experiments: an
 installable package in `src/`, experiments with their YAML specifications in
-`experiments/`, and the uv, ruff, pre-commit, Conventional Commits and git-cliff
-tooling.
+`experiments/`, and the uv, ruff, pre-commit and Conventional Commits tooling.
 
 > Use `copier copy` rather than GitHub's "Use this template" button, which
 > would copy the unrendered template.
@@ -22,6 +21,7 @@ Copier asks for:
 
 | Question | Effect |
 |---|---|
+| `releases` | Off (default): a plain version in `__init__.py`. On: the version comes from git tags (hatch-vcs), with a git-cliff `cliff.toml` |
 | `flavor` | `basic` (experimaestro only), `torch` (adds PyTorch, xpm-torch and a `pre_experiment.py` that mocks heavy modules when planning) or `ir` (adds experimaestro-ir and datamaestro on top of `torch`) |
 | `torch_index` | The PyTorch wheels to use on Linux (`torch` and `ir` only) |
 | `carbon` | Tracks the energy use and carbon emissions of the jobs |
@@ -52,5 +52,5 @@ answers.
 
 ```bash
 scripts/check-template.sh basic
-scripts/check-template.sh torch --mlboard '[tensorboard, tables]' --carbon
+scripts/check-template.sh torch --mlboard '[tensorboard, tables]' --carbon --releases
 ```
