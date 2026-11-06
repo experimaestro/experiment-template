@@ -1,0 +1,7 @@
+# Shared by the specifications of this experiment
+file: run
+{%- if flavor != 'basic' %}
+pre_experiment: pre_experiment.py   # mocks torch & co. when planning
+{%- endif %}
+
+values: [2]

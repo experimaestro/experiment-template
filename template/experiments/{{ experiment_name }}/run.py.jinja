@@ -1,0 +1,59 @@
+{%- set tensorboard = 'tensorboard' in mlboard or 'wandb' in mlboard -%}
+{%- set tables = 'tables' in mlboard -%}
+"""{{ experiment_name }}: the experimental plan
+
+The parameters are set in the YAML files of this folder. Run with::
+
+    uv run experimaestro run experiments/{{ experiment_name }}/{{ specifications[0] }}.yaml
+
+Note: no ``from __future__ import annotations`` (experimaestro introspects the
+``run`` annotations to find the specification class).
+"""
+
+from experimaestro import tag
+from experimaestro.experiments import (
+    ExperimentHelper,
+    ExperimentSpecification,
+    specification,
+)
+from experimaestro.launcherfinder import find_launcher
+{%- if tables or tensorboard %}
+from xpm_mlboard import (
+{%- if tables %}
+    TableViewerService,
+{%- endif %}
+{%- if tensorboard %}
+    TensorboardService,
+{%- endif %}
+)
+{%- endif %}
+
+from {{ package_name }}.tasks import Square
+
+
+@specification()
+class Specification(ExperimentSpecification):
+    values: list[int]
+    """The values to square"""
+
+    requirements: str = "duration=1h & cpu(mem=1G)"
+    """What a job needs (used to find a launcher, e.g. SLURM)"""
+
+
+def run(helper: ExperimentHelper, cfg: Specification):
+    launcher = find_launcher(cfg.requirements)
+{%- if tensorboard %}
+    tensorboard = helper.xp.add_service(TensorboardService("runs"))
+{%- endif %}
+{%- if tables %}
+    tables = helper.xp.add_service(TableViewerService("tables"))
+{%- endif %}
+
+    for value in cfg.values:
+        {% if tensorboard or tables %}task = {% endif %}Square.C(value=tag(value)).submit(launcher=launcher)
+{%- if tensorboard %}
+        tensorboard.add(task, task.run_path)
+{%- endif %}
+{%- if tables %}
+        tables.add(task, task.results_path, name="results")
+{%- endif %}

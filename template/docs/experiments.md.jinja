@@ -1,0 +1,25 @@
+# Experiments
+
+Each folder of [`experiments/`](../experiments) is one experiment: `run.py`
+holds the experimental plan, and its options are set in the YAML files.
+
+## {{ experiment_name }}
+
+| Specification | Notes |
+|---|---|
+{%- for spec in specifications %}
+| `{{ spec }}.yaml` | |
+{%- endfor %}
+
+`common.yaml` holds the options shared by the specifications.
+
+## Adding an experiment
+
+Copy a folder of `experiments/` and change the `id` of its YAML files (each
+experiment needs its own). The tests pick up new specifications automatically.
+
+## Outputs
+
+Jobs are identified by their parameters: re-running an experiment only submits
+the jobs that are not done. The manager process must stay alive while jobs run:
+on a cluster, start it in a `tmux` session.

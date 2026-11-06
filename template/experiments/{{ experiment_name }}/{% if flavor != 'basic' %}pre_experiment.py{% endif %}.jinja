@@ -1,0 +1,32 @@
+"""Mocks heavy modules in the experiment manager process
+
+Planning the experiments only needs the configuration classes: mocking torch &
+co. avoids importing them (the jobs import the real modules).
+"""
+
+import logging
+
+from experimaestro.experiments import mock_modules
+
+logger = logging.getLogger(__name__)
+
+MOCKED = [
+    "torch",
+    "torchmetrics",
+    "torchdata",
+    "lightning",
+    "lightning_fabric",
+    "pytorch_lightning",
+]
+
+logger.info("Mocking modules in the experiment manager: %s", MOCKED)
+mock_modules(MOCKED)
+{%- if flavor == 'ir' %}
+
+# A mocked ``torch.cuda.is_available()`` is truthy: with triton installed
+# (Linux + CUDA), xpmir would then import its Sparton kernels, which register
+# torch custom operators at import time (and fail on the mocked torch)
+import torch  # noqa: E402
+
+torch.cuda.is_available = lambda: False
+{%- endif %}

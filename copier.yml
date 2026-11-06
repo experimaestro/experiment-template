@@ -1,0 +1,122 @@
+_min_copier_version: "9.7.1" # {% yield %} in file names
+_subdirectory: template
+_answers_file: .copier-answers.yml
+
+# Research code and notes: `copier update` only changes the tooling files
+_skip_if_exists:
+  - "experiments/**"
+  - "src/{{ package_name }}/tasks.py"
+  - docs/experiments.md
+  - README.md
+
+project_name:
+  type: str
+  help: Project (distribution) name
+  validator: >-
+    {% if not (project_name | regex_search('^[a-z][a-z0-9_-]*$')) %}
+    Use lowercase letters, digits, - and _
+    {% endif %}
+
+package_name:
+  type: str
+  help: Python import name (the code goes in src/<package_name>)
+  default: "{{ project_name | replace('-', '_') }}"
+  validator: >-
+    {% if not (package_name | regex_search('^[a-z_][a-z0-9_]*$')) %}
+    Not a valid Python identifier
+    {% endif %}
+
+description:
+  type: str
+  help: One-line description
+
+author_name:
+  type: str
+  default: Benjamin Piwowarski
+
+author_email:
+  type: str
+  default: benjamin@piwowarski.fr
+
+github_repo:
+  type: str
+  help: GitHub repository (owner/name), used for changelog links
+  default: "experimaestro/{{ project_name }}"
+
+default_branch:
+  type: str
+  default: main
+
+license:
+  type: str
+  help: SPDX license expression
+  default: GPL-3.0-or-later
+
+python_min:
+  type: str
+  help: Minimum supported Python version
+  choices:
+    - "3.11"
+    - "3.12"
+    - "3.13"
+    - "3.14"
+  default: "3.12"
+
+flavor:
+  type: str
+  help: Kind of experiments
+  choices:
+    basic - experimaestro only: basic
+    torch - adds PyTorch and xpm-torch: torch
+    ir - adds experimaestro-ir and datamaestro on top of torch: ir
+  default: basic
+
+torch_index:
+  type: str
+  help: PyTorch wheels on Linux
+  when: "{{ flavor != 'basic' }}"
+  choices:
+    - cpu
+    - cu126
+    - cu128
+    - cu130
+  default: cpu
+
+carbon:
+  type: bool
+  help: Track the energy use and carbon emissions of the jobs?
+  default: false
+
+mlboard:
+  type: str
+  help: Monitoring services from xpm-mlboard
+  multiselect: true
+  choices:
+    TensorBoard learning curves: tensorboard
+    Table viewer for results: tables
+    Weights & Biases export: wandb
+  default: "{{ ['tensorboard'] if flavor != 'basic' else [] }}"
+
+experiment_name:
+  type: str
+  help: Name of the first experiment (the folder experiments/<experiment_name>)
+  default: main
+  validator: >-
+    {% if not (experiment_name | regex_search('^[A-Za-z][A-Za-z0-9_-]*$')) %}
+    Use letters, digits, - and _, starting with a letter
+    {% endif %}
+
+specifications:
+  type: yaml
+  help: Specifications of this experiment, one YAML file for each
+  default: "[debug, full]"
+  validator: >-
+    {% if not specifications %}
+    Give at least one specification
+    {% elif (specifications | map('string') | unique | list | length) != (specifications | length) %}
+    Specification names must be unique
+    {% elif 'common' in specifications %}
+    The name "common" is reserved for the shared common.yaml
+    {% else %}{% for name in specifications %}{% if not (name | string | regex_search('^[A-Za-z][A-Za-z0-9_.-]*$')) %}
+    Invalid specification name "{{ name }}": use letters, digits, ., - and _, starting with a letter
+    {% endif %}{% endfor %}{% endif %}

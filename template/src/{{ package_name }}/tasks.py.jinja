@@ -1,0 +1,35 @@
+"""Example task, to replace with your own"""
+
+from pathlib import Path
+
+from experimaestro import Meta, Param, PathGenerator, Task, field
+
+
+class Square(Task):
+    """Computes the square of a value"""
+
+    value: Param[int]
+    """The value to square"""
+
+    results_path: Meta[Path] = field(default_factory=PathGenerator("results.csv"))
+    """The results (a CSV file)"""
+{%- if 'tensorboard' in mlboard or 'wandb' in mlboard %}
+
+    run_path: Meta[Path] = field(default_factory=PathGenerator("runs"))
+    """Where a training task writes its TensorBoard event files"""
+{%- endif %}
+
+    def execute(self):
+{%- if flavor != 'basic' %}
+        # Heavy modules are imported here: they are mocked when planning the
+        # experiment (see pre_experiment.py), and only needed by the job
+        import torch
+
+        square = torch.tensor(self.value).pow(2).item()
+{%- else %}
+        square = self.value**2
+{%- endif %}
+{%- if 'tensorboard' in mlboard or 'wandb' in mlboard %}
+        self.run_path.mkdir(exist_ok=True)
+{%- endif %}
+        self.results_path.write_text(f"value,square\n{self.value},{square}\n")

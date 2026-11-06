@@ -1,0 +1,93 @@
+[build-system]
+requires = ["hatchling", "hatch-vcs"]
+build-backend = "hatchling.build"
+
+[project]
+name = "{{ project_name }}"
+authors = [
+    {name = "{{ author_name }}", email = "{{ author_email }}"}
+]
+description = "{{ description }}"
+readme = "README.md"
+license = "{{ license }}"
+classifiers = [
+    "Programming Language :: Python :: 3",
+]
+requires-python = ">={{ python_min }}{% if flavor != 'basic' %},<3.15{% endif %}"
+dynamic = ["version"]
+dependencies = [
+    "experimaestro{% if carbon %}[carbon]{% endif %}>=2.10.0",
+{%- if mlboard %}
+    "xpm-mlboard[{{ mlboard | sort | join(',') }}]>=0.5.0",
+{%- endif %}
+{%- if flavor != 'basic' %}
+    "torch>=2.6",
+    "xpm-torch>=0.3.2",
+{%- endif %}
+{%- if flavor == 'ir' %}
+    "datamaestro>=1.16.1",
+    "datamaestro-ir>=0.6.0",
+    "experimaestro-ir>=1.7.0",
+{%- endif %}
+]
+
+[project.urls]
+Repository = "https://github.com/{{ github_repo }}"
+
+[dependency-groups]
+dev = [
+    "pre-commit>=4",
+    "pytest>=8",
+    "ruff>=0.17",
+]
+{%- if flavor != 'basic' %}
+
+[tool.uv]
+environments = ["sys_platform == 'darwin'", "sys_platform == 'linux'"]
+
+[tool.uv.sources]
+torch = [{ index = "pytorch-{{ torch_index }}", marker = "sys_platform == 'linux'" }]
+
+[[tool.uv.index]]
+name = "pytorch-{{ torch_index }}"
+url = "https://download.pytorch.org/whl/{{ torch_index }}"
+explicit = true
+{%- endif %}
+
+[tool.hatch.version]
+source = "vcs"
+
+[tool.hatch.version.raw-options]
+local_scheme = "no-local-version"
+
+[tool.hatch.build.hooks.vcs]
+version-file = "src/{{ package_name }}/_version.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/{{ package_name }}"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 88
+target-version = "py{{ python_min | replace('.', '') }}"
+
+[tool.ruff.lint]
+select = [
+    "E",      # pycodestyle errors
+    "F",      # pyflakes
+    "W",      # pycodestyle warnings
+    "C90",    # mccabe complexity
+    "T20",    # flake8-print
+    "UP006",  # list[int], not List[int]
+    "UP007",  # X | Y, not Union[X, Y]
+    "UP035",  # no deprecated typing imports
+    "UP045",  # X | None, not Optional[X]
+]
+ignore = [
+    "E501",   # line too long (handled by formatter)
+]
+
+[tool.ruff.lint.mccabe]
+max-complexity = 25

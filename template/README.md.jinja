@@ -1,0 +1,67 @@
+# {{ project_name }}
+
+{{ description }}
+
+## Setup
+
+```bash
+uv sync                  # install the package and the dev tools
+uv run pre-commit install
+```
+
+Tell [experimaestro](https://experimaestro-python.readthedocs.io/en/latest/settings/)
+where to store the outputs in `~/.config/experimaestro/settings.yaml`:
+
+```yaml
+workspaces:
+  - id: {{ project_name }}
+    path: ~/experiments/{{ project_name }}
+    triggers:
+      - "{{ project_name }}-*"
+```
+
+To run on a SLURM cluster, also add a
+[`launchers.py`](https://experimaestro-python.readthedocs.io/en/latest/launchers/)
+file next to it.
+
+## Experiments
+
+```bash
+# Check the task graph without running anything
+uv run experimaestro run --run-mode dry_run experiments/{{ experiment_name }}/{{ specifications[0] }}.yaml
+
+# Run (the process schedules the jobs and waits for them)
+uv run experimaestro run experiments/{{ experiment_name }}/{{ specifications[0] }}.yaml
+```
+
+See [docs/experiments.md](docs/experiments.md) for the details.
+
+## Development
+
+```bash
+uv run pytest
+```
+
+Commit messages follow [Conventional Commits](https://www.conventionalcommits.org/)
+(`feat: …`, `fix: …`), enforced by a pre-commit hook. To avoid failed commits
+when the hooks reformat files:
+
+```bash
+git add <files> && uv run pre-commit; git add -u && git commit -m "..."
+```
+
+To generate a changelog with [git-cliff](https://git-cliff.org):
+
+```bash
+uvx git-cliff -o CHANGELOG.md
+```
+
+This project was generated from
+[experiment-template](https://github.com/experimaestro/experiment-template). To
+pull later changes to the tooling (it must be a git repository with a clean
+working tree; `experiments/`, `tasks.py`, `docs/experiments.md` and this README
+are left as they are):
+
+```bash
+uvx copier update
+```

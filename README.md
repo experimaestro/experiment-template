@@ -1,28 +1,56 @@
 # experiment-template
 
-This contains the template code for setting up an experiment with [experimaestro].
+[Copier](https://copier.readthedocs.io) template for
+[experimaestro](https://experimaestro-python.readthedocs.io) experiments: an
+installable package in `src/`, experiments with their YAML specifications in
+`experiments/`, and the uv, ruff, pre-commit, Conventional Commits and git-cliff
+tooling.
 
+> Use `copier copy` rather than GitHub's "Use this template" button, which
+> would copy the unrendered template.
 
+```bash
+uvx copier copy gh:experimaestro/experiment-template my-experiment
+cd my-experiment
+git init && uv sync && uv run pre-commit install
+```
 
-## Setting up the environment
+## Questions
 
-1. Clone the repository
-2. **Re-run when pulling** Within the project directory, run `uv sync` to install all the needed packages. This will also create a `.venv`
-3. **Run just once after having cloned** `uv run pre-commit install` (if you want to ensure consistent formatting and code checking)
+As well as the project name, the Python package name, the author and the license,
+Copier asks for:
 
+| Question | Effect |
+|---|---|
+| `flavor` | `basic` (experimaestro only), `torch` (adds PyTorch, xpm-torch and a `pre_experiment.py` that mocks heavy modules when planning) or `ir` (adds experimaestro-ir and datamaestro on top of `torch`) |
+| `torch_index` | The PyTorch wheels to use on Linux (`torch` and `ir` only) |
+| `carbon` | Tracks the energy use and carbon emissions of the jobs |
+| `mlboard` | The monitoring services to set up: `tensorboard`, `tables`, `wandb` |
+| `experiment_name` | The first experiment, in `experiments/<experiment_name>/` |
+| `specifications` | One YAML file per name in this folder (by default `debug` and `full`) |
 
-### Experimaestro configuration
+`xpm-torch` always installs TensorBoard, so the `torch` and `ir` flavors get it
+even when `tensorboard` isn't selected; the option then only controls whether the
+service is set up in `run.py`.
 
-You should setup [some workspace](https://experimaestro-python.readthedocs.io/en/latest/settings/) that specifies where the output of the experiments are located
+## Updating a generated project
 
-When running on a SLURM cluster, you might also need to create a `launchers.py` file as documented [here](https://experimaestro-python.readthedocs.io/en/latest/launchers/)
+```bash
+uvx copier update
+```
 
-Finally, you can read the [experimaestro tutorial](https://experimaestro-python.readthedocs.io/en/latest/tutorial/)
+The project must be a git repository with a clean working tree. `copier update`
+only changes the tooling: `experiments/`, `src/<package_name>/tasks.py`,
+`docs/experiments.md` and `README.md` are left as they are.
 
+## Checking the template
 
-## Experiments
+[`scripts/check-template.sh`](scripts/check-template.sh) generates a project and
+then checks it: linting, tests, a real run of every specification with
+experimaestro, and `copier update`. The CI runs it for several combinations of
+answers.
 
-To run the experiment, use
-```sh
-uv run experimaestro run-experiment my_project/normal
+```bash
+scripts/check-template.sh basic
+scripts/check-template.sh torch --mlboard '[tensorboard, tables]' --carbon
 ```
